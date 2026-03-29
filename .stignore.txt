@@ -1,0 +1,5 @@
+(?d).git
+(?d).stversions
+*.sync-conflict-*
+.syncthing.*.tmp
+.syncthing.*.tmp.*
