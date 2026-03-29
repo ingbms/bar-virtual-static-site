@@ -8,184 +8,162 @@
   --line: rgba(35, 32, 28, 0.12);
 }
 
-body {
-  margin: 0;
-  font-family: Inter, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
+body { margin:0; font-family:Inter,sans-serif; background:var(--bg); color:var(--text); }
 
 header {
-  background: var(--green);
-  color: white;
-  padding: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background:var(--green);
+  color:white;
+  padding:1rem;
+  position:sticky;
+  top:0;
+  z-index:100;
 }
 
-nav {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-}
+nav { display:flex; gap:1rem; overflow-x:auto; }
+nav a { color:white; text-decoration:none; white-space:nowrap; }
 
-nav a {
-  color: white;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-h1, h2, h3 {
-  font-family: "Playfair Display", serif;
-  margin-top: 0;
-  margin-bottom: 0.5rem;
+h1,h2,h3 {
+  font-family:"Playfair Display",serif;
+  margin-top:0;
+  margin-bottom:0.5rem;
 }
 
 section {
-  scroll-margin-top: 160px;
-  padding: 0.75rem 1.5rem;
-  margin-top: 0;
+  scroll-margin-top:160px;
+  padding:0.75rem 1.5rem;
+  margin-top:0;
 }
 
 .card {
-  scroll-margin-top: 160px;
-  background: var(--bg);
-  padding: 1rem;
-  border-radius: 10px;
-  margin-bottom: 1rem;
+  scroll-margin-top:160px;
+  background:var(--bg);
+  padding:1rem;
+  border-radius:10px;
+  margin-bottom:1rem;
 }
 
 iframe {
-  background: var(--bg);
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  margin-top: 0.5rem;
+  background:var(--bg);
+  width:100%;
+  border:none;
+  border-radius:10px;
+  margin-top:0.5rem;
 }
 
 .allergen-list {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0;
+  list-style:none;
+  padding:0;
+  margin:1rem 0;
 }
 
-.allergen-list li {
-  margin-bottom: 0.4rem;
-}
+.allergen-list li { margin-bottom:0.4rem; }
 
 .allergen-list strong {
-  color: var(--green);
-  margin-right: 0.4rem;
+  color:var(--green);
+  margin-right:0.4rem;
 }
 
 .allergen-note {
-  font-size: 0.85rem;
-  opacity: 0.8;
+  font-size:0.85rem;
+  opacity:0.8;
 }
 
 footer {
-  padding: 1rem;
-  text-align: center;
-  font-size: 0.9rem;
+  padding:1rem;
+  text-align:center;
+  font-size:0.9rem;
 }
 
-/* Eigenes Karten-Rendering */
-.menu-target {
-  margin-top: 0.75rem;
-}
-
-.menu-status {
-  margin: 0;
-}
+.menu-target { margin-top:0.75rem; }
+.menu-status { margin:0; }
 
 .menu-sheet {
-  display: grid;
-  gap: 1.7rem;
+  display:grid;
+  gap:1.7rem;
 }
 
 .menu-group {
-  display: grid;
-  gap: 0.35rem;
+  display:grid;
+  gap:0.35rem;
 }
 
 .menu-group-title {
-  font-family: "Playfair Display", serif;
-  font-size: 1.85rem;
-  font-weight: 600;
-  line-height: 1.1;
-  margin: 0 0 0.25rem;
+  font-family:"Playfair Display",serif;
+  font-size:1.85rem;
+  font-weight:600;
+  line-height:1.1;
+  margin:0 0 0.25rem;
 }
 
 .menu-item-block {
-  padding: 0.15rem 0 0.4rem;
+  padding:0.15rem 0 0.4rem;
 }
 
 .menu-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 68px 30px 62px 24px;
-  column-gap: 0.55rem;
-  align-items: start;
-}
-
-.menu-item + .menu-item {
-  margin-top: 0.2rem;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) 68px 30px 62px 24px;
+  column-gap:0.55rem;
+  align-items:start;
 }
 
 .menu-title {
-  min-width: 0;
-  overflow-wrap: anywhere;
+  min-width:0;
+  overflow-wrap:anywhere;
 }
 
 .menu-amount,
 .menu-price {
-  text-align: right;
-  white-space: nowrap;
+  text-align:right;
+  white-space:nowrap;
 }
 
 .menu-unit,
 .menu-currency {
-  text-align: left;
-  white-space: nowrap;
+  text-align:left;
+  white-space:nowrap;
 }
 
 .menu-description {
-  grid-column: 1 / 2;
-  margin-top: 0.2rem;
-  color: var(--muted);
-  line-height: 1.45;
-  max-width: 44rem;
+  margin-top:0.2rem;
+  color:var(--muted);
+  line-height:1.45;
+  max-width:44rem;
 }
 
 .menu-item-block + .menu-item-block {
-  border-top: 1px solid var(--line);
-  padding-top: 0.45rem;
+  border-top:1px solid var(--line);
+  padding-top:0.45rem;
 }
 
-@media (max-width: 700px) {
+.menu-mobile-meta {
+  display:none;
+}
+
+@media (max-width:700px) {
   .menu-group-title {
-    font-size: 1.55rem;
+    font-size:1.55rem;
   }
 
   .menu-item {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.15rem;
+    grid-template-columns:minmax(0, 1fr);
+    row-gap:0.15rem;
   }
 
   .menu-amount,
   .menu-unit,
   .menu-price,
   .menu-currency {
-    display: none;
+    display:none;
   }
 
   .menu-mobile-meta {
-    color: var(--green);
-    font-weight: 600;
-    font-size: 0.98rem;
+    display:block;
+    color:var(--green);
+    font-weight:600;
+    font-size:0.98rem;
   }
 
   .menu-description {
-    max-width: none;
+    max-width:none;
   }
 }
