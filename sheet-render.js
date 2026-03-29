@@ -1,3 +1,88 @@
+google.charts.load("current", { packages: ["table"] });
+google.charts.setOnLoadCallback(initMenus);
+
+/*
+  WICHTIG:
+  Hier die normale Tabellen-ID aus der üblichen Sheets-URL einsetzen:
+  https://docs.google.com/spreadsheets/d/DIESE_ID/edit#gid=0
+
+  NICHT die veröffentlichte /d/e/.../pubhtml-ID.
+*/
+const SPREADSHEET_ID = "DEINE_TABELLEN_ID_HIER";
+
+const MENU_CONFIGS = [
+  {
+    targetId: "menu-bierwein",
+    gid: "0",
+    range: "A1:H24"
+  },
+  {
+    targetId: "menu-cocktails",
+    gid: "2047228110",
+    range: "A1:H33"
+  },
+  {
+    targetId: "menu-alkoholfrei",
+    gid: "105662338",
+    range: "A2:H15"
+  },
+  {
+    targetId: "menu-speisen",
+    gid: "3728547",
+    range: "A1:H15"
+  }
+];
+
+function initMenus() {
+  if (!SPREADSHEET_ID || SPREADSHEET_ID === "DEINE_TABELLEN_ID_HIER") {
+    for (const cfg of MENU_CONFIGS) {
+      setStatus(cfg.targetId, "Bitte zuerst die normale Google-Sheets-ID in sheet-render.js eintragen.");
+    }
+    return;
+  }
+
+  MENU_CONFIGS.forEach(loadMenu);
+}
+
+function buildQueryUrl({ gid, range }) {
+  const base = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SPREADSHEET_ID)}/gviz/tq`;
+  const params = new URLSearchParams({
+    gid,
+    range,
+    headers: "0"
+  });
+  return `${base}?${params.toString()}`;
+}
+
+function loadMenu(cfg) {
+  const query = new google.visualization.Query(buildQueryUrl(cfg));
+  query.setRefreshInterval(300);
+  query.send((response) => handleMenuResponse(cfg.targetId, response));
+}
+
+function handleMenuResponse(targetId, response) {
+  if (response.isError()) {
+    setStatus(
+      targetId,
+      `Die Karte konnte aktuell nicht geladen werden. (${response.getMessage()})`
+    );
+    return;
+  }
+
+  const data = response.getDataTable();
+  const rows = dataTableToRows(data);
+  const normalized = normalizeRows(rows);
+  const textCol = detectTextColumn(normalized);
+  const classified = classifyRows(normalized, textCol);
+  document.getElementById(targetId).innerHTML = buildMenuHtml(classified);
+}
+
+function setStatus(targetId, message) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  el.innerHTML = `<p class="menu-status">${escapeHtml(message)}</p>`;
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -7,21 +92,29 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function parseTSV(tsvText) {
-  return tsvText
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .split("\n")
-    .map(line => line.split("\t"))
-    .filter(row => row.some(cell => String(cell ?? "").trim() !== ""));
+function dataTableToRows(data) {
+  const rows = [];
+  const rowCount = data.getNumberOfRows();
+  const colCount = data.getNumberOfColumns();
+
+  for (let r = 0; r < rowCount; r++) {
+    const row = [];
+    for (let c = 0; c < colCount; c++) {
+      const formatted = data.getFormattedValue(r, c);
+      const raw = data.getValue(r, c);
+      row.push(String(formatted ?? raw ?? "").trim());
+    }
+    rows.push(row);
+  }
+  return rows;
 }
 
 function normalizeRows(rows) {
-  const maxCols = Math.max(0, ...rows.map(row => row.length));
+  const maxCols = Math.max(...rows.map(r => r.length), 0);
   return rows.map(row => {
-    const padded = [...row];
-    while (padded.length < maxCols) padded.push("");
-    return padded.map(cell => String(cell ?? "").trim());
+    const out = [...row];
+    while (out.length < maxCols) out.push("");
+    return out.map(cell => String(cell ?? "").trim());
   });
 }
 
@@ -30,11 +123,11 @@ function isEmptyRow(row) {
 }
 
 function nonEmptyIndexes(row) {
-  const indexes = [];
+  const out = [];
   for (let i = 0; i < row.length; i++) {
-    if (row[i] !== "") indexes.push(i);
+    if (row[i] !== "") out.push(i);
   }
-  return indexes;
+  return out;
 }
 
 function detectTextColumn(rows) {
@@ -43,13 +136,17 @@ function detectTextColumn(rows) {
 
   for (let col = 0; col < (rows[0]?.length || 0); col++) {
     let score = 0;
+
     for (const row of rows) {
-      const value = row[col] || "";
+      const value = row[col];
       if (!value) continue;
-      if (!/^[\d.,]+$/.test(value) && !/^(€|eur|l|cl|ml|st\.?|stk\.?|je)$/i.test(value)) {
-        score++;
-      }
+
+      const numericish = /^[\d.,]+$/.test(value);
+      const unitish = /^(€|eur|l|cl|ml|st\.?|stk\.?|je)$/i.test(value);
+
+      if (!numericish && !unitish) score++;
     }
+
     if (score > bestScore) {
       bestScore = score;
       bestIndex = col;
@@ -69,7 +166,7 @@ function classifyRows(rows, textCol) {
     const filled = nonEmptyIndexes(row);
 
     if (filled.length === 0) {
-      result.push({ type: "empty", row });
+      result.push({ type: "empty" });
       continue;
     }
 
@@ -85,7 +182,7 @@ function classifyRows(rows, textCol) {
       continue;
     }
 
-    const hasAnyMeta = row.some((cell, index) => index !== textCol && cell !== "");
+    const hasMeta = row.some((cell, index) => index !== textCol && cell !== "");
 
     if (onlyTextColumnFilled && previousMeaningfulType === "item") {
       result.push({
@@ -96,7 +193,7 @@ function classifyRows(rows, textCol) {
       continue;
     }
 
-    if (row[textCol] !== "" && hasAnyMeta) {
+    if (row[textCol] !== "" && hasMeta) {
       result.push({
         type: "item",
         title: row[textCol],
@@ -122,7 +219,7 @@ function classifyRows(rows, textCol) {
       continue;
     }
 
-    result.push({ type: "empty", row });
+    result.push({ type: "empty" });
   }
 
   return result;
@@ -161,6 +258,10 @@ function buildMenuHtml(classifiedRows) {
         html += `</div>`;
       }
 
+      const mobileMeta = [row.amount, row.unit, row.price, row.currency]
+        .filter(Boolean)
+        .join(" ");
+
       html += `
         <div class="menu-item-block">
           <div class="menu-item">
@@ -169,6 +270,7 @@ function buildMenuHtml(classifiedRows) {
             <div class="menu-unit">${escapeHtml(row.unit)}</div>
             <div class="menu-price">${escapeHtml(row.price)}</div>
             <div class="menu-currency">${escapeHtml(row.currency)}</div>
+            ${mobileMeta ? `<div class="menu-mobile-meta">${escapeHtml(mobileMeta)}</div>` : ``}
           </div>
       `;
       itemOpen = true;
@@ -180,63 +282,9 @@ function buildMenuHtml(classifiedRows) {
     }
   }
 
-  if (itemOpen) {
-    html += `</div>`;
-  }
-  if (groupOpen) {
-    html += `</div></section>`;
-  }
-
+  if (itemOpen) html += `</div>`;
+  if (groupOpen) html += `</div></section>`;
   html += `</div>`;
+
   return html;
-}
-
-async function renderGoogleTSVMenu({ targetId, tsvUrl }) {
-  const target = document.getElementById(targetId);
-  if (!target) return;
-
-  target.innerHTML = `<p class="menu-loading">Lade Karte …</p>`;
-
-  try {
-    const response = await fetch(tsvUrl, {
-      method: "GET",
-      mode: "cors",
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const raw = await response.text();
-    const rows = normalizeRows(parseTSV(raw));
-
-    if (!rows.length) {
-      target.innerHTML = `<p class="menu-error">Keine Daten vorhanden.</p>`;
-      return;
-    }
-
-    const textCol = detectTextColumn(rows);
-    const classified = classifyRows(rows, textCol);
-    target.innerHTML = buildMenuHtml(classified);
-
-    if (window.matchMedia("(max-width: 700px)").matches) {
-      for (const item of target.querySelectorAll(".menu-item")) {
-        const amount = item.querySelector(".menu-amount")?.textContent?.trim() || "";
-        const unit = item.querySelector(".menu-unit")?.textContent?.trim() || "";
-        const price = item.querySelector(".menu-price")?.textContent?.trim() || "";
-        const currency = item.querySelector(".menu-currency")?.textContent?.trim() || "";
-
-        if (amount || unit || price || currency) {
-          const meta = document.createElement("div");
-          meta.className = "menu-meta";
-          meta.textContent = [amount, unit, price, currency].filter(Boolean).join(" ");
-          item.appendChild(meta);
-        }
-      }
-    }
-  } catch (error) {
-    console.error(error);
-    target.innerHTML = `<p class="menu-error">Die Karte konnte aktuell nicht geladen werden.</p>`;
-  }
 }

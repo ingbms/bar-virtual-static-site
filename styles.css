@@ -4,6 +4,8 @@
   --green: #2F5D46;
   --gold: #B08A4A;
   --spacing: 0.5rem;
+  --muted: #6a645b;
+  --line: rgba(35, 32, 28, 0.12);
 }
 
 body {
@@ -34,9 +36,7 @@ nav a {
   white-space: nowrap;
 }
 
-h1,
-h2,
-h3 {
+h1, h2, h3 {
   font-family: "Playfair Display", serif;
   margin-top: 0;
   margin-bottom: 0.5rem;
@@ -57,12 +57,11 @@ section {
 }
 
 iframe {
-  display: block;
+  background: var(--bg);
   width: 100%;
   border: none;
   border-radius: 10px;
   margin-top: 0.5rem;
-  background: var(--bg);
 }
 
 .allergen-list {
@@ -89,4 +88,104 @@ footer {
   padding: 1rem;
   text-align: center;
   font-size: 0.9rem;
+}
+
+/* Eigenes Karten-Rendering */
+.menu-target {
+  margin-top: 0.75rem;
+}
+
+.menu-status {
+  margin: 0;
+}
+
+.menu-sheet {
+  display: grid;
+  gap: 1.7rem;
+}
+
+.menu-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.menu-group-title {
+  font-family: "Playfair Display", serif;
+  font-size: 1.85rem;
+  font-weight: 600;
+  line-height: 1.1;
+  margin: 0 0 0.25rem;
+}
+
+.menu-item-block {
+  padding: 0.15rem 0 0.4rem;
+}
+
+.menu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px 30px 62px 24px;
+  column-gap: 0.55rem;
+  align-items: start;
+}
+
+.menu-item + .menu-item {
+  margin-top: 0.2rem;
+}
+
+.menu-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.menu-amount,
+.menu-price {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.menu-unit,
+.menu-currency {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.menu-description {
+  grid-column: 1 / 2;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  line-height: 1.45;
+  max-width: 44rem;
+}
+
+.menu-item-block + .menu-item-block {
+  border-top: 1px solid var(--line);
+  padding-top: 0.45rem;
+}
+
+@media (max-width: 700px) {
+  .menu-group-title {
+    font-size: 1.55rem;
+  }
+
+  .menu-item {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.15rem;
+  }
+
+  .menu-amount,
+  .menu-unit,
+  .menu-price,
+  .menu-currency {
+    display: none;
+  }
+
+  .menu-mobile-meta {
+    color: var(--green);
+    font-weight: 600;
+    font-size: 0.98rem;
+  }
+
+  .menu-description {
+    max-width: none;
+  }
 }
