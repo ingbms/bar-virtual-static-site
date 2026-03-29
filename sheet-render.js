@@ -4,10 +4,10 @@ google.charts.setOnLoadCallback(initMenus);
 const SPREADSHEET_ID = "1zw5c-IHcMCcERlPjHGmOkaS6EUEACBC-Ls44LACVfis";
 
 const MENU_CONFIGS = [
-  { targetId: "menu-bierwein",    gid: "0",          range: "A1:H24" },
-  { targetId: "menu-cocktails",   gid: "2047228110", range: "A1:H33" },
-  { targetId: "menu-alkoholfrei", gid: "105662338",  range: "A2:H15" },
-  { targetId: "menu-speisen",     gid: "3728547",    range: "A1:H15" }
+  { targetId: "menu-bierwein",    gid: "0",          range: "A1:G120" },
+  { targetId: "menu-cocktails",   gid: "2047228110", range: "A1:G120" },
+  { targetId: "menu-alkoholfrei", gid: "105662338",  range: "A1:G120" },
+  { targetId: "menu-speisen",     gid: "3728547",    range: "A1:G120" }
 ];
 
 function initMenus() {
@@ -56,6 +56,13 @@ function setStatus(targetId, message) {
   target.innerHTML = `<p class="menu-status">${escapeHtml(message)}</p>`;
 }
 
+function cleanCell(value) {
+  if (value === null || value === undefined) return "";
+  const s = String(value).replace(/\u00A0/g, " ").trim();
+  if (s.toLowerCase() === "null") return "";
+  return s;
+}
+
 function dataTableToRows(data) {
   const out = [];
   const rowCount = data.getNumberOfRows();
@@ -66,7 +73,7 @@ function dataTableToRows(data) {
     for (let c = 0; c < colCount; c++) {
       const formatted = data.getFormattedValue(r, c);
       const raw = data.getValue(r, c);
-      row.push(String(formatted ?? raw ?? "").trim());
+      row.push(cleanCell(formatted ?? raw));
     }
     out.push(row);
   }
@@ -74,67 +81,105 @@ function dataTableToRows(data) {
   return out;
 }
 
-function normalizeRow(row, minLength = 6) {
+function normalizeRow(row, minLength = 7) {
   const out = [...row];
   while (out.length < minLength) out.push("");
-  return out.map(v => String(v ?? "").trim());
+  return out.map(cleanCell);
 }
 
-function isRowEmpty(row) {
-  return row.every(cell => cell === "");
+function isSeparatorRow(row) {
+  // Relevant sind B-G. A wird ignoriert.
+  for (let i = 1; i <= 6; i++) {
+    if (cleanCell(row[i]) !== "") {
+      return false;
+    }
+  }
+  return true;
 }
 
 function rowsToStructured(rows) {
-  const normalized = rows.map(row => normalizeRow(row, 6));
+  const normalized = rows.map(row => normalizeRow(row, 7));
+
   const groups = [];
   let currentGroup = null;
   let lastItem = null;
 
-  for (let i = 0; i < normalized.length; i++) {
-    const row = normalized[i];
-    const prevRow = i > 0 ? normalized[i - 1] : null;
+  let separatorCount = 0;
+  let previousType = "start"; // start | separator | item | text
 
-    if (isRowEmpty(row)) {
+  for (const row of normalized) {
+    const colB = cleanCell(row[1]);
+    const colC = cleanCell(row[2]);
+    const colD = cleanCell(row[3]);
+    const colE = cleanCell(row[4]);
+    const colF = cleanCell(row[5]);
+    const colG = cleanCell(row[6]);
+
+    const separator = isSeparatorRow(row);
+
+    if (separator) {
+      separatorCount += 1;
+
+      if (separatorCount >= 2) {
+        break;
+      }
+
+      previousType = "separator";
       lastItem = null;
       continue;
     }
 
-    const title = row[1] || "";
-    const amount = row[2] || "";
-    const unit = row[3] || "";
-    const price = row[4] || "";
-    const currency = row[5] || "";
+    separatorCount = 0;
+
+    const title = colB;
+    const amount = colC;
+    const unit = colD;
+    const price = colE;
+    const currency = colF;
+    const extra = colG;
 
     const onlyTitleFilled =
       title !== "" &&
       amount === "" &&
       unit === "" &&
       price === "" &&
-      currency === "";
+      currency === "" &&
+      extra === "";
 
-    const prevIsEmpty = !prevRow || isRowEmpty(prevRow);
-
-    // Neue Gruppe: erste inhaltliche Zeile ODER nach Leerzeile
-    if (onlyTitleFilled && prevIsEmpty) {
+    // Reine Textzeile am Anfang => Gruppe
+    if (onlyTitleFilled && previousType === "start") {
       currentGroup = {
         title,
         items: []
       };
       groups.push(currentGroup);
       lastItem = null;
+      previousType = "text";
       continue;
     }
 
-    // Beschreibung: nur Text, aber NICHT nach Leerzeile, direkt zu letztem Artikel
-    if (onlyTitleFilled && lastItem) {
-      if (lastItem.description) {
-        lastItem.description += " " + title;
-      } else {
-        lastItem.description = title;
-      }
+    // Reine Textzeile nach Trenner => Gruppe
+    if (onlyTitleFilled && previousType === "separator") {
+      currentGroup = {
+        title,
+        items: []
+      };
+      groups.push(currentGroup);
+      lastItem = null;
+      previousType = "text";
       continue;
     }
 
+    // Reine Textzeile nach Artikel => Beschreibung
+    if (onlyTitleFilled && previousType === "item" && lastItem) {
+      lastItem.description = lastItem.description
+        ? `${lastItem.description} ${title}`
+        : title;
+      previousType = "text";
+      continue;
+    }
+
+    // Normale Artikelzeile
     if (!currentGroup) {
       currentGroup = {
         title: "",
@@ -154,6 +199,7 @@ function rowsToStructured(rows) {
 
     currentGroup.items.push(item);
     lastItem = item;
+    previousType = "item";
   }
 
   return groups;

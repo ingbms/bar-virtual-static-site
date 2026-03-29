@@ -95,6 +95,7 @@ function rowsToStructured(rows) {
     const prevRow = i > 0 ? normalized[i - 1] : null;
 
     if (isRowEmpty(row)) {
+      lastItem = null;
       continue;
     }
 
@@ -111,9 +112,10 @@ function rowsToStructured(rows) {
       price === "" &&
       currency === "";
 
-    const prevIsEmpty = prevRow ? isRowEmpty(prevRow) : true;
+    const prevIsEmpty = !prevRow || isRowEmpty(prevRow);
 
-    if (onlyTitleFilled && (i === 0 || prevIsEmpty)) {
+    // Neue Gruppe: erste inhaltliche Zeile ODER nach Leerzeile
+    if (onlyTitleFilled && prevIsEmpty) {
       currentGroup = {
         title,
         items: []
@@ -123,8 +125,13 @@ function rowsToStructured(rows) {
       continue;
     }
 
+    // Beschreibung: nur Text, aber NICHT nach Leerzeile, direkt zu letztem Artikel
     if (onlyTitleFilled && lastItem) {
-      lastItem.description = title;
+      if (lastItem.description) {
+        lastItem.description += " " + title;
+      } else {
+        lastItem.description = title;
+      }
       continue;
     }
 
