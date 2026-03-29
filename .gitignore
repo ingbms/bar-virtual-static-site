@@ -1,0 +1,5 @@
+# Catch-all für Syncthing Artefakte
+.syncthing*
+*-sync-conflict-*
+.stfolder
+.stversions/
