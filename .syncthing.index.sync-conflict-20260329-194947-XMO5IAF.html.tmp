@@ -1,22 +1,84 @@
 <!DOCTYPE html>
+
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Die Himmlische Bar</title>
+<title>Pullacher Stüberl</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+
+<style>
+:root {
+  --bg: #F7F3EA;
+  --text: #23201C;
+  --green: #2F5D46;
+  --gold: #B08A4A;
+  --spacing: 0.5rem;
+}
+
+body { margin:0; font-family:Inter,sans-serif; background:var(--bg); color:var(--text); }
+header { background:var(--green); color:white; padding:1rem; position:sticky; top:0; }
+nav { display:flex; gap:1rem; overflow-x:auto; }
+nav a { color:white; text-decoration:none; white-space:nowrap; }
+h1,h2,h3 { 
+  font-family:"Playfair Display",serif;
+  margin-top: 0;
+  margin-bottom: 0.5rem; 
+}
+
+section { 
+  scroll-margin-top: 160px;
+  padding:0.75rem 1.5rem; 
+  margin-top: 0; 
+}
+.card { 
+  scroll-margin-top: 160px;
+  background:var(--bg); 
+  padding:1rem; 
+  border-radius:10px; 
+  margin-bottom:1rem; 
+}
+iframe {
+  background:var(--bg);  
+  width:100%; 
+  border:none; 
+  border-radius:10px; 
+  margin-top: 0.5rem; 
+}
+.allergen-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.allergen-list li {
+  margin-bottom: 0.4rem;
+}
+
+.allergen-list strong {
+  color: var(--green);
+  margin-right: 0.4rem;
+}
+
+.allergen-note {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+footer { padding:1rem; text-align:center; font-size:0.9rem; }
+</style>
+
 </head>
 
 <body>
 
 <header>
-  <h1>Die Himmlische Bar</h1>
+  <h1>Pullacher Stüberl</h1>
   <h3>Treffen - Entspannen - Feiern</h3>
   <hr>
   <nav>
-    <a href="#intro">Die Bar:</a>
+    <a href="#intro">Das Stüberl:</a>
     <a href="#zeiten">Öffnungszeiten</a>
     <a href="#getraenke">Getränke</a>
     <a href="#speisen">Speisen</a>
@@ -31,8 +93,8 @@
   </nav>
 </header>
 
-<section class="intro" id="intro">
-  <h2>Willkommen in der Himmlischen Bar</h2>
+<section class="intro"  id="intro">
+  <h2>Willkommen im Pullacher Stüberl</h2>
   <p class="card">
     Gemütliche Bar, sonniger Biergarten mit schattigen Plätzen und ein großer runder Tisch für gesellige Runden.<br>
     Ob Feierabendbier, spontane Runde oder kleine Auszeit – hier trifft man sich.<br>
@@ -43,44 +105,34 @@
 
 <section id="zeiten">
 <h2>Öffnungszeiten</h2>
-<div class="card"><h3>Wir haben geöffnet:</h3>Täglich 14h bis 22h.<br>Dienstag ist Ruhetag.</div>
+<div class="card"><h3>Wir haben geöffnet:</h3>Täglich 14h bis 22h.<BR>Dienstag ist Ruhetag.</div>
 </section>
 
 <section id="getraenke">
 <h2>Speisen & Getränke</h2>
 
 <div class="card">
-  <h3>Bier & Wein & Schaumweine</h3>
-  <div id="menu-bier-wein" class="menu-render-target">
-    <p>Lade Karte …</p>
-  </div>
+<h3>Bier & Wein & Schaumweine</h3>
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pubhtml?gid=0&single=true&range=A1:H24&widget=true&headers=false&footers=false"
+  style="width:100%; height:550px; border:none;"></iframe>
 </div>
-
-<div class="card">
-  <h3>Cocktails & Spirituosen</h3>
-  <div id="menu-cocktails" class="menu-render-target">
-    <p>Lade Karte …</p>
-  </div>
+<div class="card"><h3>Cocktails & Spirituosen</h3>
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pubhtml?gid=2047228110&single=true&range=A1:H33&widget=true&headers=false&footers=false"
+  style="width:100%; height:700px; border:none;"></iframe>
 </div>
-
-<div class="card">
-  <h3>Alkoholfrei</h3>
-  <div id="menu-alkoholfrei" class="menu-render-target">
-    <p>Lade Karte …</p>
-  </div>
+<div class="card"><h3>Alkoholfrei</h3>
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pubhtml?gid=105662338&single=true&range=A2:H15&widget=true&headers=false&footers=false"
+  style="width:100%; height:300px; border:none;"></iframe>
 </div>
-
-<div class="card" id="speisen">
-  <h3>Speisen</h3>
-  <div id="menu-speisen" class="menu-render-target">
-    <p>Lade Karte …</p>
-  </div>
+<div class="card" id="speisen"><h3>Speisen</h3>
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pubhtml?gid=3728547&single=true&range=A1:H15&widget=true&headers=false&footers=false"
+  style="width:100%; height:300px; border:none;"></iframe>
 </div>
 </section>
 
 <section id="events">
 <h2>Veranstaltungen</h2>
-<div class="card">4.4.2036: Geburtstagsfeier des Wirts, ich bitte um zahlreiche Anmeldungen und Reservierungen, danke.</div>
+<div class="card">4.4.2026: Einweihungsfeier des neuen Wirts, ich bitte um zahlreiche Anmeldungen und Reservierungen, danke.</div>
 </section>
 
 <section id="kalender">
@@ -98,14 +150,14 @@
 <section id="impressum">
 <h2>Impressum</h2>
 <div class="card">
-Die Himmlische Bar<br>
-Wirt: Barti <br>
-X-Straße <br>
-1234 Irgendwo
+Pullacher Stüberl<br>
+Wirt: Musti <br>
+Schubertstraße 44<br>
+82049 Pullach im Isartal
 <p>
     Kontakt:<br>
     E-Mail:
-    <a href="mailto:barti@gmail.com">barti@gmail.com</a>
+    <a href="mailto:pullacher.stuberl@gmail.com">pullacher.stuberl@gmail.com</a>
   </p>
 </div>
 </section>
@@ -116,10 +168,10 @@ X-Straße <br>
   <h3>1. Verantwortlicher</h3>
   <p>
     Verantwortlich für die Datenverarbeitung auf dieser Website:<br>
-    Barti <br>
-    X-straße 44<br>
-    1324 Irgendwo<br><br>
-    E-Mail: <a href="mailto:barti@gmail.com">barti@gmail.com</a><br>
+    Musti <br>
+    Schubertstraße 44<br>
+    82049 Pullach im Isartal    Deutschland<br><br>
+    E-Mail: <a href="mailto:pullacher.stuberl@gmail.com">pullacher.stuberl@gmail.com</a><br>
     Telefon: [[TELEFON]]
   </p>
 
@@ -207,7 +259,6 @@ X-Straße <br>
   </p>
 
 </section>
-
 <section id="allergene">
   <h2>Allergene</h2>
   <h3>Vorab: Ich bin weder Arzt noch Chemiker, daher nicht böse sein, es kann in meinen Lebensmitteln alles drin sein, ich weiß es einfach nicht.</h3>
@@ -235,30 +286,8 @@ X-Straße <br>
   </p>
 </section>
 
-<footer>© IMGBMS</footer>
-
-<script src="sheet-render.js"></script>
-<script>
-  renderGoogleTSVMenu({
-    targetId: "menu-bier-wein",
-    tsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pub?gid=0&single=true&output=tsv"
-  });
-
-  renderGoogleTSVMenu({
-    targetId: "menu-cocktails",
-    tsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pub?gid=2047228110&single=true&output=tsv"
-  });
-
-  renderGoogleTSVMenu({
-    targetId: "menu-alkoholfrei",
-    tsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pub?gid=105662338&single=true&output=tsv"
-  });
-
-  renderGoogleTSVMenu({
-    targetId: "menu-speisen",
-    tsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm3lTgrExCdGvLQXRsBCC8bho8yFZHfep2jTSeUZN6alJvS5uNlaEFJLP9XydhyexxV8nMEER4xxig/pub?gid=3728547&single=true&output=tsv"
-  });
-</script>
+<footer>© Pullacher Stüberl</footer>
 
 </body>
 </html>
+

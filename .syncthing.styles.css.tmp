@@ -1,0 +1,24 @@
+:root {
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Inter", sans-serif;
+
+  --color-bg: #F7F3EA;
+  --color-text: #23201C;
+  --color-accent: #2F5D46;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+h1, h2 {
+  font-family: var(--font-heading);
+}
+
+header {
+  padding: 2rem;
+  text-align: center;
+}
