@@ -10,8 +10,15 @@ const MENU_CONFIGS = [
   { targetId: "menu-speisen",     gid: "3728547",    range: "A1:G120" }
 ];
 
+const EVENT_CONFIG = {
+  targetId: "events-target",
+  sheet: "Events",
+  range: "A1:Z200"
+};
+
 function initMenus() {
   MENU_CONFIGS.forEach(loadMenu);
+  loadEvents(EVENT_CONFIG);
 }
 
 function buildQueryUrl({ gid, range }) {
@@ -27,6 +34,20 @@ function buildQueryUrl({ gid, range }) {
 function loadMenu(cfg) {
   const query = new google.visualization.Query(buildQueryUrl(cfg));
   query.send((response) => handleMenuResponse(cfg.targetId, response));
+}
+
+function buildEventQueryUrl({ sheet, range }) {
+  const base = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq`;
+  const params = new URLSearchParams({
+    sheet,
+    range
+  });
+  return `${base}?${params.toString()}`;
+}
+
+function loadEvents(cfg) {
+  const query = new google.visualization.Query(buildEventQueryUrl(cfg));
+  query.send((response) => handleEventsResponse(cfg.targetId, response));
 }
 
 function handleMenuResponse(targetId, response) {
@@ -48,6 +69,31 @@ function handleMenuResponse(targetId, response) {
   const rows = dataTableToRows(data);
   const structured = rowsToStructured(rows);
   document.getElementById(targetId).innerHTML = buildMenuHtml(structured);
+}
+
+function handleEventsResponse(targetId, response) {
+  if (response.isError()) {
+    setStatus(
+      targetId,
+      `Die Events konnten aktuell nicht geladen werden: ${response.getMessage()}`
+    );
+    return;
+  }
+
+  const data = response.getDataTable();
+
+  if (!data || data.getNumberOfRows() === 0) {
+    setStatus(targetId, "Aktuell sind keine Events eingetragen.");
+    return;
+  }
+
+  const eventPayload = dataTableToEventPayload(data);
+  if (!eventPayload.length) {
+    setStatus(targetId, "Aktuell sind keine Events eingetragen.");
+    return;
+  }
+
+  document.getElementById(targetId).innerHTML = buildEventsHtml(eventPayload);
 }
 
 function setStatus(targetId, message) {
@@ -79,6 +125,73 @@ function dataTableToRows(data) {
   }
 
   return out;
+}
+
+function dataTableToEventPayload(data) {
+  const rowCount = data.getNumberOfRows();
+  const colCount = data.getNumberOfColumns();
+
+  const columns = [];
+  for (let c = 0; c < colCount; c++) {
+    const label = cleanCell(data.getColumnLabel(c));
+    columns.push({
+      id: c,
+      label: label || `Info ${c + 1}`
+    });
+  }
+
+  const events = [];
+  for (let r = 0; r < rowCount; r++) {
+    const details = [];
+
+    for (let c = 0; c < colCount; c++) {
+      const formatted = data.getFormattedValue(r, c);
+      const raw = data.getValue(r, c);
+      const value = cleanCell(formatted ?? raw);
+      if (!value) continue;
+
+      details.push({
+        label: columns[c].label,
+        value
+      });
+    }
+
+    if (!details.length) continue;
+    events.push(eventDetailsToEvent(details));
+  }
+
+  return events;
+}
+
+function eventDetailsToEvent(details) {
+  const getByLabel = (patterns) => {
+    for (const detail of details) {
+      const label = detail.label.toLowerCase();
+      for (const pattern of patterns) {
+        if (label.includes(pattern)) return detail.value;
+      }
+    }
+    return "";
+  };
+
+  const title = getByLabel(["titel", "event", "name"]);
+  const date = getByLabel(["datum"]);
+  const time = getByLabel(["uhrzeit", "zeit"]);
+  const deadline = getByLabel(["anmeldung"]);
+  const explicitEmail = getByLabel(["mail", "e-mail"]);
+  const mailMatch = details
+    .map((detail) => detail.value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i))
+    .find(Boolean);
+  const email = explicitEmail || (mailMatch ? mailMatch[0] : "");
+
+  return {
+    title,
+    date,
+    time,
+    deadline,
+    email,
+    details
+  };
 }
 
 function normalizeRow(row, minLength = 7) {
@@ -244,6 +357,74 @@ function buildMenuHtml(groups) {
 
   html += `</div>`;
   return html;
+}
+
+function buildEventsHtml(events) {
+  let html = `<div class="event-list">`;
+
+  for (const event of events) {
+    html += `<article class="event-card">`;
+
+    if (event.title) {
+      html += `<h4 class="event-title">${escapeHtml(event.title)}</h4>`;
+    }
+
+    for (const detail of event.details) {
+      if (event.title && detail.label.toLowerCase().includes("titel")) continue;
+      html += `
+        <p class="event-detail">
+          <span class="event-label">${escapeHtml(detail.label)}:</span>
+          ${escapeHtml(detail.value)}
+        </p>
+      `;
+    }
+
+    const mailto = buildEventMailto(event);
+    if (mailto) {
+      html += `
+        <p class="event-cta">
+          <a class="event-link" href="${escapeHtml(mailto)}">Jetzt per E-Mail anmelden</a>
+        </p>
+      `;
+    }
+
+    html += `</article>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function buildEventMailto(event) {
+  if (!event.email) return "";
+
+  const subjectParts = ["Anmeldung"];
+  if (event.title) subjectParts.push(`für ${event.title}`);
+  if (event.date) subjectParts.push(`am ${event.date}`);
+  const subject = subjectParts.join(" ");
+
+  const body = [
+    "Hallo,",
+    "",
+    event.title
+      ? `hiermit melde ich mich für das Event "${event.title}" an.`
+      : "hiermit melde ich mich für das Event an.",
+    [event.date, event.time].filter(Boolean).length
+      ? `Termin: ${[event.date, event.time].filter(Boolean).join(" | ")}`
+      : "",
+    event.deadline ? `Anmeldung bis: ${event.deadline}` : "",
+    "",
+    "Name: ",
+    "Anzahl Personen: ",
+    "Telefon (optional): ",
+    "Nachricht (optional): ",
+    "",
+    "Viele Grüße"
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return `mailto:${event.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function escapeHtml(value) {
