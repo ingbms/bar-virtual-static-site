@@ -204,6 +204,7 @@ function eventDetailsToEvent(details) {
     return "";
   };
 
+  const type = getByLabel(["typ", "type", "art"]);
   const title = getByLabel(["titel", "event", "name"]);
   const date = getByLabel(["datum"]);
   const time = getByLabel(["uhrzeit", "zeit"]);
@@ -213,13 +214,19 @@ function eventDetailsToEvent(details) {
     .map((detail) => detail.value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i))
     .find(Boolean);
   const email = explicitEmail || (mailMatch ? mailMatch[0] : "");
+  const normalizedType = cleanCell(type).toLowerCase();
+  const isPrivate =
+    normalizedType.includes("privat") ||
+    normalizedType.includes("geschlossen");
 
   return {
+    type,
     title,
     date,
     time,
     deadline,
     email,
+    isPrivate,
     details
   };
 }
@@ -399,14 +406,29 @@ function buildEventsHtml(events) {
       html += `<h4 class="event-title">${escapeHtml(event.title)}</h4>`;
     }
 
-    for (const detail of event.details) {
-      if (event.title && detail.label.toLowerCase().includes("titel")) continue;
+    const filteredDetails = event.details.filter((detail) => {
+      const label = detail.label.toLowerCase();
+
+      if (event.title && label.includes("titel")) return false;
+      if (!event.isPrivate) return true;
+
+      if (label.includes("beschreibung")) return false;
+      if (label.includes("anmeldung")) return false;
+      if (label.includes("mail")) return false;
+      return true;
+    });
+
+    for (const detail of filteredDetails) {
       html += `
         <p class="event-detail">
           <span class="event-label">${escapeHtml(detail.label)}:</span>
           ${escapeHtml(detail.value)}
         </p>
       `;
+    }
+
+    if (event.isPrivate) {
+      html += `<p class="event-private-note">Geschlossene Gesellschaft</p>`;
     }
 
     const mailto = buildEventMailto(event);
@@ -426,7 +448,7 @@ function buildEventsHtml(events) {
 }
 
 function buildEventMailto(event) {
-  if (!event.email) return "";
+  if (!event.email || event.isPrivate) return "";
 
   const subjectParts = ["Anmeldung"];
   if (event.title) subjectParts.push(`für ${event.title}`);

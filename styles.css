@@ -170,6 +170,12 @@ footer {
   margin:0.65rem 0 0;
 }
 
+.event-private-note {
+  margin:0.7rem 0 0;
+  font-weight:700;
+  color:var(--green);
+}
+
 .event-link {
   display:inline-block;
   background:var(--green);
