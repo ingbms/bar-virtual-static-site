@@ -36,18 +36,54 @@ function loadMenu(cfg) {
   query.send((response) => handleMenuResponse(cfg.targetId, response));
 }
 
-function buildEventQueryUrl({ sheet, range }) {
+function buildEventJsonpUrl({ sheet, range, handler }) {
   const base = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq`;
   const params = new URLSearchParams({
     sheet,
-    range
+    range,
+    tqx: `out:json;responseHandler:${handler}`
   });
   return `${base}?${params.toString()}`;
 }
 
 function loadEvents(cfg) {
-  const query = new google.visualization.Query(buildEventQueryUrl(cfg));
-  query.send((response) => handleEventsResponse(cfg.targetId, response));
+  const targetId = cfg.targetId;
+  const callbackName = `eventsJsonpCallback_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const script = document.createElement("script");
+
+  const cleanup = () => {
+    if (window[callbackName]) {
+      try {
+        delete window[callbackName];
+      } catch {
+        window[callbackName] = undefined;
+      }
+    }
+    if (script.parentNode) {
+      script.parentNode.removeChild(script);
+    }
+  };
+
+  const timeout = setTimeout(() => {
+    cleanup();
+    setStatus(targetId, "Die Events konnten aktuell nicht geladen werden (Zeitüberschreitung).");
+  }, 12000);
+
+  window[callbackName] = (response) => {
+    clearTimeout(timeout);
+    cleanup();
+    handleEventsJsonResponse(targetId, response);
+  };
+
+  script.async = true;
+  script.src = buildEventJsonpUrl({ ...cfg, handler: callbackName });
+  script.onerror = () => {
+    clearTimeout(timeout);
+    cleanup();
+    setStatus(targetId, "Die Events konnten aktuell nicht geladen werden.");
+  };
+
+  document.head.appendChild(script);
 }
 
 function handleMenuResponse(targetId, response) {
@@ -71,23 +107,16 @@ function handleMenuResponse(targetId, response) {
   document.getElementById(targetId).innerHTML = buildMenuHtml(structured);
 }
 
-function handleEventsResponse(targetId, response) {
-  if (response.isError()) {
-    setStatus(
-      targetId,
-      `Die Events konnten aktuell nicht geladen werden: ${response.getMessage()}`
-    );
+function handleEventsJsonResponse(targetId, response) {
+  if (!response || response.status !== "ok" || !response.table) {
+    const errorMessage = response && response.errors && response.errors.length
+      ? cleanCell(response.errors[0].detailed_message || response.errors[0].reason)
+      : "Unbekannter Fehler";
+    setStatus(targetId, `Die Events konnten aktuell nicht geladen werden: ${errorMessage}`);
     return;
   }
 
-  const data = response.getDataTable();
-
-  if (!data || data.getNumberOfRows() === 0) {
-    setStatus(targetId, "Aktuell sind keine Events eingetragen.");
-    return;
-  }
-
-  const eventPayload = dataTableToEventPayload(data);
+  const eventPayload = tableToEventPayload(response.table);
   if (!eventPayload.length) {
     setStatus(targetId, "Aktuell sind keine Events eingetragen.");
     return;
@@ -127,13 +156,12 @@ function dataTableToRows(data) {
   return out;
 }
 
-function dataTableToEventPayload(data) {
-  const rowCount = data.getNumberOfRows();
-  const colCount = data.getNumberOfColumns();
-
+function tableToEventPayload(table) {
+  const cols = Array.isArray(table.cols) ? table.cols : [];
+  const rows = Array.isArray(table.rows) ? table.rows : [];
   const columns = [];
-  for (let c = 0; c < colCount; c++) {
-    const label = cleanCell(data.getColumnLabel(c));
+  for (let c = 0; c < cols.length; c++) {
+    const label = cleanCell(cols[c] && cols[c].label);
     columns.push({
       id: c,
       label: label || `Info ${c + 1}`
@@ -141,13 +169,15 @@ function dataTableToEventPayload(data) {
   }
 
   const events = [];
-  for (let r = 0; r < rowCount; r++) {
+  for (const row of rows) {
+    const cells = Array.isArray(row && row.c) ? row.c : [];
     const details = [];
 
-    for (let c = 0; c < colCount; c++) {
-      const formatted = data.getFormattedValue(r, c);
-      const raw = data.getValue(r, c);
-      const value = cleanCell(formatted ?? raw);
+    for (let c = 0; c < columns.length; c++) {
+      const cell = cells[c];
+      const formatted = cell && cell.f;
+      const raw = cell && cell.v;
+      const value = cleanCell(formatted || raw);
       if (!value) continue;
 
       details.push({
